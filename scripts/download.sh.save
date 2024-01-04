@@ -17,12 +17,12 @@
 #
 #   If $4 == "another" only the **first two sequence** should be output
 
-output_url="$1"
-destination_path="$2"
-unzip_file="$3"
+if [$# -ne 1]
+then 
+	echo "Usage: $1 <url>"
+	exit 1
+fi
 
-wget -P "$destination_path" "$output_url"
-	if "$unzip_file" == "yes":
-		do
-			gunzip "$output_url"
-		done
+	url=$1
+	directory=$2
+	wget $url -P $director

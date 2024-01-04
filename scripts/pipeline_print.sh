@@ -3,7 +3,7 @@
 
 for url in $(data/urls) #TODO
 do
-    bash scripts/download2.sh $url decont/data
+    echo "$url"
 done
 
 # Download the contaminants fasta file, uncompress it, and

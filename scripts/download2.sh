@@ -21,8 +21,13 @@ output_url="$1"
 destination_path="$2"
 unzip_file="$3"
 
-wget -P "$destination_path" "$output_url"
-	if "$unzip_file" == "yes":
-		do
-			gunzip "$output_url"
-		done
+#while IFS= read -r url; do
+  # Use wget to download the file
+
+
+	wget -P "$destination_path" "$output_url"
+#		if "$unzip_file" == "yes":
+#			do
+#				gunzip "$output_url"
+#			done
+#done < "urls"
