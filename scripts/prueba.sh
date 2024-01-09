@@ -1,4 +1,4 @@
-for url in $("data/prueba.sh")
+for url in $(~/decont/data/urls)
 do
-	echo "$url"
+	echo ${url}
 done
