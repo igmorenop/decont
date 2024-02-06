@@ -1,39 +1,100 @@
 #Download all the files specified in data/filenames
 
-
-for url in $(data/urls) #TODO
-do
-    bash scripts/download2.sh $url decont/data
-done
+if [ ! -f data/*.fastq.gz* ]
+then
+	for url in $(cat data/urls) #TODO
+	do
+    		echo "Descargando ficheros fastq..."
+    		bash scripts/download2.sh $url data
+    		echo "Ficheros fastq descargados"
+	done
+else
+	echo "Los ficheros ya se encuentran descargados"
+fi
 
 # Download the contaminants fasta file, uncompress it, and
 # filter to remove all small nuclear RNAs
-#bash scripts/download.sh https://bioinformatics.cnio.es/data/courses/decont/contaminants.fasta.gz res yes #TODO
+if [ ! -f "res/contaminants_filtered.fasta" ]
+then
+	echo "Descargando fichero con genoma de referencia, descomprimiendo y depurando archivo..."
+	bash scripts/download2.sh https://bioinformatics.cnio.es/data/courses/decont/contaminants.fasta.gz res yes #TODO
+	echo "Genoma de referencia descargado y depurado"
+else
+	echo "El genoma de referencia ya se encuentra descargado, descomprimido y depurado"
+fi
 
 # Index the contaminants file
-#bash scripts/index.sh res/contaminants.fasta res/contaminants_idx
+# Chequea si el directorio para indexar el archivo existe o no
+if [ ! -d "res/contaminants_idx" ]
+then
+	mkdir -p res/contaminants_idx
+fi
 
-# Merge the samples into a single file
-#for sid in $(<list_of_sample_ids>) #TODO
-#do
-#    bash scripts/merge_fastqs.sh data out/merged $sid
-#done
+#Ejecuta el script "index" para indexar el fichero contaminants, previamente filtrado de small nuclear RNA
+if [ ! -f "res/contaminants_idx/genomeParameters.txt" ]
+then
+	echo "Indexando el genoma de referencia..."
+	bash scripts/index.sh res/contaminants_filtered.fasta res/contaminants_idx
+	echo "Genoma de referencia indexado"
+else
+	echo "El genoma de referencia ya se encuentra indexado"
+fi
+
+# (linea 20) Merge the samples into a single file
+#Realiza el bucle para unir los RNA en un archivo
+for sid in $(ls data | grep 'fastq'| cut -d"." -f1 | sort | uniq) #TODO
+do
+    	bash scripts/merge_fastqs.sh data out/merged $sid
+done
 
 # TODO: run cutadapt for all merged files
-# cutadapt -m 18 -a TGGAATTCTCGGGTGCCAAGG --discard-untrimmed \
-#     -o <trimmed_file> <input_file> > <log_file>
+# Chequea si el directorio para los ficheros "trimmed" se encuentra creado, y si no existe, lo crea
+if [ ! -d "out/trimmed" ]
+then
+	mkdir -p out/trimmed
+fi
 
+#Chequea si el directorio para el fichero .log creado por cutadapt se encuentra creado, y si no existe, lo crea
+if [ ! -d "log/cutadapt" ]
+then
+	mkdir -p log/cutadapt
+fi
+
+#Realiza el bucle para quitar los adaptadores a partir de los ficheros unidos, crea el fichero "trimmed", y envía el log a la carpeta creada previamente
+for sid in $(ls out/merged | cut -d"_" -f1,2 | sort | uniq )
+do
+		if [ ! -f "out/trimmed/"$sid".trimmed.fastq.gz" ]
+		then
+			echo "Quitando adaptadores de" "$sid"
+			cutadapt -m 18 -a TGGAATTCTCGGGTGCCAAGG --discard-untrimmed \
+			-o out/trimmed/"$sid".trimmed.fastq.gz out/merged/"$sid"_merged.fastq.gz > log/cutadapt/"$sid".log
+			echo "Adaptadores quitados"
+
+		else
+			echo "Los adaptadores en" "$sid" "ya se encontraban retirados"
+		fi
+done
 # TODO: run STAR for all trimmed files
-#for fname in out/trimmed/*.fastq.gz
-#do
-    # you will need to obtain the sample ID from the filename
-#    sid=#TODO
-    # mkdir -p out/star/$sid
-    # STAR --runThreadN 4 --genomeDir res/contaminants_idx \
-    #    --outReadsUnmapped Fastx --readFilesIn <input_file> \
-    #    --readFilesCommand gunzip -c --outFileNamePrefix <output_directory>
-#done
-
+#Crea el bucle para ejecutar STAR con los archivos "trimmed" y compararlos con el genoma indexado previamente
+for fname in out/trimmed/*.fastq.gz
+do
+	# you will need to obtain the sample ID from the filename
+	sid=$(basename "$fname" .trimmed.fastq.gz) #TODO
+	# Chequea si la carpeta existe, y si no, la crea
+	if [ ! -d "out/star/$sid" ]
+	then
+		mkdir -p out/star/$sid
+	fi
+	
+	if [ ! -f "out/star/"$sid"/*.sam" ]
+	then
+		echo "Alineando con genoma de referencia..."
+		STAR --runThreadN 4 --genomeDir res/contaminants_idx --outReadsUnmapped Fastx --readFilesIn "$fname" --readFilesCommand gunzip -c --outFileNamePrefix out/star/"$sid"
+		echo "Alineamiento completado"
+	else
+		echo "Alineamiento realizado previamente"
+	fi
+done
 # TODO: create a log file containing information from cutadapt and star logs
 # (this should be a single log file, and information should be *appended* to it on each run)
 # - cutadapt: Reads with adapters and total basepairs

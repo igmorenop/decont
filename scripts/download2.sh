@@ -17,17 +17,18 @@
 #
 #   If $4 == "another" only the **first two sequence** should be output
 
-output_url="$1"
+input_url="$1"
 destination_path="$2"
 unzip_file="$3"
+#filter_word="$4"
 
-#while IFS= read -r url; do
-  # Use wget to download the file
+# Use wget to download the file
 
+wget -P "$destination_path" "$input_url" "$unzip_file"
 
-	wget -P "$destination_path" "$output_url"
-#		if "$unzip_file" == "yes":
-#			do
-#				gunzip "$output_url"
-#			done
-#done < "urls"
+#Chequea si el tercer argumento es "yes" para descomprimir el archivo descargado
+if [ "$unzip_file" = "yes" ]; then
+	file= $(basename "$url")
+	gunzip -k "$destination_path"/"$file"*.gz
+	seqkit grep -n -p 'small nuclear' -v -r res/contaminants.fasta | seqkit grep -n -p 'snRNA' -v -r res/contaminants.fasta > res/contaminants_filtered.fasta
+fi

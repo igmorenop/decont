@@ -17,12 +17,28 @@
 #
 #   If $4 == "another" only the **first two sequence** should be output
 
-output_url="$1"
-destination_path="$2"
-unzip_file="$3"
+#output_url=$1
+#destination_path=$2
+#unzip_file=$3
 
-wget -P "$destination_path" "$output_url"
-	if "$unzip_file" == "yes":
-		do
-			gunzip "$output_url"
-		done
+if [$# -eq 1]
+then 
+	wget $1
+
+elif [$# -eq 2]
+then
+	wget $1 $2
+
+elif [$# -eq 3]
+then
+	if [$3 -eq 'yes']
+	then
+		wget $1 $2 > download_file
+		gunzip -r download_file
+	else
+		echo "wrong argument"
+	fi
+#else
+#	echo "Usage: $0 <file> <directory> <'yes' to unzip>"
+fi
+

@@ -3,3 +3,21 @@
 # stored in the output directory specified by the second argument ($2).
 #
 # The directory containing the samples is indicated by the first argument ($1).
+
+#Create the arguments
+
+directory="$1"
+output_directory="$2"
+sid="$3"
+
+if [ ! -d 'out/merged' ]
+then
+	mkdir -p out/merged
+fi
+
+if [ ! -f out/merged/"$sid"_merged.fastq.gz ]
+then
+	cat "$directory"/"$sid".5dpp.1.1*.fastq.gz "$directory"/"$sid".5dpp.1.2*.fastq.gz > "$output_directory"/"$sid"_merged.fastq.gz
+else
+	echo "$sid" "ya se encuentra unido"
+fi
