@@ -17,7 +17,7 @@ fi
 
 if [ ! -f out/merged/"$sid"_merged.fastq.gz ]
 then
-	cat "$directory"/"$sid".5dpp.1.1*.fastq.gz "$directory"/"$sid".5dpp.1.2*.fastq.gz > "$output_directory"/"$sid"_merged.fastq.gz
+	cat "$directory"/"$sid"-12.5dpp.1.1*.fastq.gz "$directory"/"$sid"-12.5dpp.1.2*.fastq.gz > "$output_directory"/"$sid".merged.fastq.gz
 else
 	echo "$sid" "ya se encuentra unido"
 fi

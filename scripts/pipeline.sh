@@ -6,10 +6,24 @@ then
 	do
     		echo "Descargando ficheros fastq..."
     		bash scripts/download2.sh $url data
-    		echo "Ficheros fastq descargados"
+    		echo "Ficheros fastq descargados, se procedeŕa a su comprobación"
+		curl -s $url | md5sum | cut -d" " -f1 | sort | uniq  >> data/control.md5
 	done
 else
 	echo "Los ficheros ya se encuentran descargados"
+fi
+
+#Comprobación de los ficheros mediante md5
+for file in $(ls data/*.fastq.gz*); do
+	md5sum $file | cut -d" " -f1 | sort | uniq  >> data/cases.md5
+done
+md5_cases="data/cases.md5"
+md5_control="data/control.md5"
+comprobacion=$(diff "$md5_cases" "$md5_control")
+if [ "$comprobacion" = "" ];then
+	echo "Los archivos se han descargado correctamente"
+else
+	echo "Ha habido un error en la descarga"
 fi
 
 # Download the contaminants fasta file, uncompress it, and
@@ -42,7 +56,7 @@ fi
 
 # (linea 20) Merge the samples into a single file
 #Realiza el bucle para unir los RNA en un archivo
-for sid in $(ls data | grep 'fastq'| cut -d"." -f1 | sort | uniq) #TODO
+for sid in $(ls data | grep 'fastq'| cut -d"-" -f1 | sort | uniq) #he cambiado _ por - en el -d (test)
 do
     	bash scripts/merge_fastqs.sh data out/merged $sid
 done
@@ -61,13 +75,16 @@ then
 fi
 
 #Realiza el bucle para quitar los adaptadores a partir de los ficheros unidos, crea el fichero "trimmed", y envía el log a la carpeta creada previamente
-for sid in $(ls out/merged | cut -d"_" -f1,2 | sort | uniq )
+for sid in $(ls out/merged | cut -d"." -f1 | sort | uniq )
 do
 		if [ ! -f "out/trimmed/"$sid".trimmed.fastq.gz" ]
 		then
 			echo "Quitando adaptadores de" "$sid"
 			cutadapt -m 18 -a TGGAATTCTCGGGTGCCAAGG --discard-untrimmed \
-			-o out/trimmed/"$sid".trimmed.fastq.gz out/merged/"$sid"_merged.fastq.gz > log/cutadapt/"$sid".log
+			-o out/trimmed/"$sid".trimmed.fastq.gz out/merged/"$sid".merged.fastq.gz > log/cutadapt/"$sid".log
+			#Indexar la información en Report.log
+			echo "Information from cutadapt in" "$sid" >> log/Report.log
+			sed -n '8{p};16{p}' log/cutadapt/"$sid".log >> log/Report.log
 			echo "Adaptadores quitados"
 
 		else
@@ -89,8 +106,12 @@ do
 	if [ ! -f "out/star/"$sid"/*.sam" ]
 	then
 		echo "Alineando con genoma de referencia..."
-		STAR --runThreadN 4 --genomeDir res/contaminants_idx --outReadsUnmapped Fastx --readFilesIn "$fname" --readFilesCommand gunzip -c --outFileNamePrefix out/star/"$sid"
+		STAR --runThreadN 4 --genomeDir res/contaminants_idx --outReadsUnmapped Fastx --readFilesIn "$fname" --readFilesCommand gunzip -c --outFileNamePrefix out/star/"$sid"_
 		echo "Alineamiento completado"
+		#Indexar la información en Report.log
+		echo "Information from STAR in" "$sid" >> log/Report.log
+		sed -n '9,10{p}' out/star/"$sid"_Log.final.out >> log/Report.log
+		sed -n '24,27{p}' out/star/"$sid"_Log.final.out >> log/Report.log
 	else
 		echo "Alineamiento realizado previamente"
 	fi

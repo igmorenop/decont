@@ -7,7 +7,7 @@ cleanup_function() {
                 		rm -r "$file"
 			fi
 		done
-		echo "Archivos eliminados en la directorio $1"
+		echo "Archivos eliminados en el directorio $1"
     	else
         	echo "La carpeta $1 está vacía"
     	fi
@@ -22,12 +22,13 @@ if [ "$#" -ge 1 ]; then
 #En el caso de que no se indiquen argumentos, el script eliminará el contenido de todos los directorios
 else
 #if [ "$#" -eq 0 ]; then
-	echo "Eliminando el contenido de todo el directorio de estudio"
+	echo "Eliminando el contenido de todo el directorio de estudio, excepto directorio scripts"
 	for dir in */; do
 		if [ "$dir" != "scripts/" ]; then
 			cleanup_function "$dir"
 		fi
 	done
+	echo "Todo el contenido eliminado, menos directorio scripts"
 fi
 
 #rm -r data/*.fastq.gz* log/cutadapt out/merged out/star out/trimmed res/*.fasta* res/contaminants_idx
