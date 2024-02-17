@@ -24,11 +24,15 @@ unzip_file="$3"
 
 # Use wget to download the file
 
-wget -P "$destination_path" "$input_url" "$unzip_file"
+wget -P "$destination_path" "$input_url"
 
 #Chequea si el tercer argumento es "yes" para descomprimir el archivo descargado
 if [ "$unzip_file" = "yes" ]; then
 	file= $(basename "$url")
+	echo "Descomprimiendo archivo descargado..."
 	gunzip -k "$destination_path"/"$file"*.gz
+	echo "Archivo descomprimido"
+	#Filtra las secuencias para quitar aquellas relacionadas con "small nuclear" y "snRNA".
+	echo "Filtrando secuencias en genoma de referencia..."
 	seqkit grep -n -p 'small nuclear' -v -r res/contaminants.fasta | seqkit grep -n -p 'snRNA' -v -r res/contaminants.fasta > res/contaminants_filtered.fasta
 fi
