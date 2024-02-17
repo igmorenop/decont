@@ -1,0 +1,13 @@
+name: rna_prac
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - seqkit
+  - star
+  - cutadapt
+  - igv
+  - ca-certificates
+  - openssl
+prefix: /home/vant/miniforge3/envs/rna_prac
